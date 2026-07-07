@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: nginx:1.25-alpine  # Our starting stable version (v1.25)
+        image: nginx:1.26-alpine  # Our starting stable version (v1.25)
         ports:
         - containerPort: 80
 ---
