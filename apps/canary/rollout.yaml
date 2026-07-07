@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: canary-web-app
+  namespace: staging
+spec:
+  replicas: 5                    # We will run 5 pods to clearly see traffic splitting
+  strategy:
+    canary:
+      # This is the progressive execution engine definition
+      steps:
+      - setWeight: 20            # Step 1: Direct exactly 20% (1 out of 5 pods) to the new version
+      - pause: {duration: 45s}   # Step 2: Pause for 45 seconds to monitor for errors/ImagePullBackOff
+      - setWeight: 60            # Step 3: If healthy, scale up to 60% traffic (3 pods)
+      - pause: {duration: 30s}   # Step 4: Pause for 30 seconds
+                                 # Step 5: Automatically promote to 100% if no errors occur
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: canary-web-app
+  template:
+    metadata:
+      labels:
+        app: canary-web-app
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.25-alpine  # Our starting stable version (v1.25)
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-web-service
+  namespace: staging
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: canary-web-app
