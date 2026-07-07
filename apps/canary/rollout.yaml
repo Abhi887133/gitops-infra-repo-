@@ -4,16 +4,15 @@ metadata:
   name: canary-web-app
   namespace: staging
 spec:
-  replicas: 5                    # We will run 5 pods to clearly see traffic splitting
+  replicas: 5                    # 5 replicas make it very easy to visualize a 20% traffic split (1 pod)
   strategy:
     canary:
-      # This is the progressive execution engine definition
       steps:
-      - setWeight: 20            # Step 1: Direct exactly 20% (1 out of 5 pods) to the new version
-      - pause: {duration: 45s}   # Step 2: Pause for 45 seconds to monitor for errors/ImagePullBackOff
-      - setWeight: 60            # Step 3: If healthy, scale up to 60% traffic (3 pods)
-      - pause: {duration: 30s}   # Step 4: Pause for 30 seconds
-                                 # Step 5: Automatically promote to 100% if no errors occur
+      - setWeight: 20            # Step 1: Shift 20% (1 pod) of traffic to the new version
+      - pause: {duration: 40s}   # Step 2: Pause for 40 seconds to watch for failures/ImagePullBackOffs
+      - setWeight: 60            # Step 3: Automatically scale up to 60% traffic (3 pods) if healthy
+      - pause: {duration: 20s}   # Step 4: Pause for 20 seconds
+                                 # Step 5: Automatically scale up to 100%
   revisionHistoryLimit: 2
   selector:
     matchLabels:
